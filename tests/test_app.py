@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from app import get_eval_metrics, get_sample_dataset, predict_sample
+from app import get_eval_metrics, get_sample_dataset, predict_sample, plot_confusion_matrix
 from src.train import create_pipeline, FEATURE_COLUMNS
 
 
@@ -54,21 +54,10 @@ def test_get_sample_dataset_fallback():
         assert col in df.columns
 
 
-def test_confusion_matrix_heatmap_generation():
-    """Test annotated heatmap generation with native int conversion."""
-    import plotly.figure_factory as ff
-    cm_raw = [[56788, 76], [65, 33]]
-    z = [[int(val) for val in row] for row in cm_raw]
-    x = ["Predicted Normal (0)", "Predicted Fraud (1)"]
-    y = ["Actual Normal (0)", "Actual Fraud (1)"]
-    z_text = [[str(int(val)) for val in row] for row in z]
-
-    fig = ff.create_annotated_heatmap(
-        z=z,
-        x=x,
-        y=y,
-        annotation_text=z_text,
-        colorscale="Blues",
-        showscale=True,
-    )
+def test_plot_confusion_matrix():
+    """Test plot_confusion_matrix generates valid Plotly Figure without error."""
+    cm = [[56788, 76], [65, 33]]
+    fig = plot_confusion_matrix(cm)
     assert fig is not None
+    assert hasattr(fig, "data")
+    assert len(fig.data) > 0

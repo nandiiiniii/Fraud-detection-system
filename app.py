@@ -7,7 +7,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import plotly.express as px
-import plotly.figure_factory as ff
+import plotly.graph_objects as go
 import streamlit as st
 
 from src.train import FEATURE_COLUMNS
@@ -85,6 +85,43 @@ def predict_sample(model, df_row: pd.DataFrame) -> Tuple[bool, float]:
     anomaly_score = float(-decision_score)
     is_fraud = bool(raw_pred == -1)
     return is_fraud, anomaly_score
+
+
+def plot_confusion_matrix(cm):
+    """Render confusion matrix using Plotly graph objects heatmap with text annotations."""
+    cm = np.array(cm).astype(int).tolist()  # force plain Python ints, not numpy types
+    labels = ["Not Fraud", "Fraud"]
+    z_text = [[str(val) for val in row] for row in cm]
+
+    fig = go.Figure(data=go.Heatmap(
+        z=cm,
+        x=labels,
+        y=labels,
+        colorscale="Blues",
+        showscale=True
+    ))
+
+    annotations = []
+    max_val = np.max(cm)
+    for i, row in enumerate(cm):
+        for j, val in enumerate(row):
+            annotations.append(dict(
+                x=labels[j],
+                y=labels[i],
+                text=z_text[i][j],
+                showarrow=False,
+                font=dict(color="white" if val > (max_val / 2) else "black")
+            ))
+
+    fig.update_layout(
+        title="Confusion Matrix",
+        xaxis_title="Predicted",
+        yaxis_title="Actual",
+        yaxis=dict(autorange="reversed"),
+        template="plotly_white",
+        annotations=annotations
+    )
+    return fig
 
 
 def main():
@@ -249,36 +286,8 @@ def main():
         with col_left:
             st.markdown("### 🎯 Confusion Matrix")
             cm_raw = metrics.get("confusion_matrix", [[0, 0], [0, 0]])
-            if isinstance(cm_raw, np.ndarray):
-                cm_raw = cm_raw.tolist()
-
-            # Ensure pure native Python integers for Plotly figure factory
-            z = [[int(val) for val in row] for row in cm_raw]
-            x = ["Predicted Normal (0)", "Predicted Fraud (1)"]
-            y = ["Actual Normal (0)", "Actual Fraud (1)"]
-            z_text = [[str(int(val)) for val in row] for row in z]
-
-            try:
-                fig_cm = ff.create_annotated_heatmap(
-                    z=z,
-                    x=x,
-                    y=y,
-                    annotation_text=z_text,
-                    colorscale="Blues",
-                    showscale=True,
-                )
-                fig_cm.update_layout(
-                    title_text="Test Set Confusion Matrix",
-                    xaxis_title="Predicted Label",
-                    yaxis_title="True Label",
-                    yaxis=dict(autorange="reversed"),
-                    template="plotly_white",
-                )
-                st.plotly_chart(fig_cm, use_container_width=True)
-            except Exception as e:
-                st.warning(f"Could not render heatmap: {e}")
-                cm_df = pd.DataFrame(z, index=y, columns=x)
-                st.dataframe(cm_df, use_container_width=True)
+            fig_cm = plot_confusion_matrix(cm_raw)
+            st.plotly_chart(fig_cm, use_container_width=True)
 
         with col_right:
             st.markdown("### 📋 Evaluation Summary")
