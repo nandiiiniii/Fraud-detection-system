@@ -12,14 +12,6 @@ import streamlit as st
 from src.train import FEATURE_COLUMNS
 
 
-st.set_page_config(
-    page_title="Fraud & Anomaly Detector",
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-
 @st.cache_resource
 def load_trained_model(model_path: str = "models/model.pkl"):
     """Load the trained Isolation Forest pipeline from disk."""
@@ -80,6 +72,12 @@ def predict_sample(model, df_row: pd.DataFrame):
 
 
 def main():
+    st.set_page_config(
+        page_title="Fraud & Anomaly Detector",
+        page_icon="🛡️",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
     st.title("🛡️ Credit Card Fraud & Anomaly Detector")
     st.markdown(
         "An unsupervised fraud detection system powered by **Isolation Forest**. "
