@@ -52,3 +52,24 @@ def test_load_sample_dataset_fallback():
     assert isinstance(df, pd.DataFrame)
     for col in FEATURE_COLUMNS:
         assert col in df.columns
+
+
+def test_confusion_matrix_heatmap_generation():
+    """Test annotated heatmap generation with native int conversion."""
+    import plotly.figure_factory as ff
+    cm_raw = [[56788, 76], [65, 33]]
+    z = [[int(val) for val in row] for row in cm_raw]
+    x = ["Predicted Normal (0)", "Predicted Fraud (1)"]
+    y = ["Actual Normal (0)", "Actual Fraud (1)"]
+    z_text = [[str(int(val)) for val in row] for row in z]
+
+    fig = ff.create_annotated_heatmap(
+        z=z,
+        x=x,
+        y=y,
+        annotation_text=z_text,
+        colorscale="Blues",
+        showscale=True,
+    )
+    assert fig is not None
+

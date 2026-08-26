@@ -34,7 +34,7 @@ def load_sample_dataset(data_path: str = "data/creditcard.csv") -> pd.DataFrame:
     """Load transactions for single check sampling (falls back to synthetic if not found)."""
     path = Path(data_path)
     if path.exists():
-        return pd.read_csv(path)
+        return pd.read_csv(path, nrows=1000)
 
     # Fallback synthetic dataset for cloud environments where dataset is not committed
     np.random.seed(42)
@@ -234,29 +234,37 @@ def main():
 
         with col_left:
             st.markdown("### 🎯 Confusion Matrix")
-            cm = metrics.get("confusion_matrix", [[0, 0], [0, 0]])
-            z = cm
+            cm_raw = metrics.get("confusion_matrix", [[0, 0], [0, 0]])
+            if isinstance(cm_raw, np.ndarray):
+                cm_raw = cm_raw.tolist()
+
+            # Ensure pure native Python integers for Plotly figure factory
+            z = [[int(val) for val in row] for row in cm_raw]
             x = ["Predicted Normal (0)", "Predicted Fraud (1)"]
             y = ["Actual Normal (0)", "Actual Fraud (1)"]
+            z_text = [[str(int(val)) for val in row] for row in z]
 
-            z_text = [[str(val) for val in row] for row in z]
-
-            fig_cm = ff.create_annotated_heatmap(
-                z,
-                x=x,
-                y=y,
-                annotation_text=z_text,
-                colorscale="Blues",
-                showscale=True,
-            )
-            fig_cm.update_layout(
-                title_text="Test Set Confusion Matrix",
-                xaxis_title="Predicted Label",
-                yaxis_title="True Label",
-                yaxis=dict(autorange="reversed"),
-                template="plotly_white",
-            )
-            st.plotly_chart(fig_cm, use_container_width=True)
+            try:
+                fig_cm = ff.create_annotated_heatmap(
+                    z=z,
+                    x=x,
+                    y=y,
+                    annotation_text=z_text,
+                    colorscale="Blues",
+                    showscale=True,
+                )
+                fig_cm.update_layout(
+                    title_text="Test Set Confusion Matrix",
+                    xaxis_title="Predicted Label",
+                    yaxis_title="True Label",
+                    yaxis=dict(autorange="reversed"),
+                    template="plotly_white",
+                )
+                st.plotly_chart(fig_cm, use_container_width=True)
+            except Exception as e:
+                st.warning(f"Could not render heatmap: {e}")
+                cm_df = pd.DataFrame(z, index=y, columns=x)
+                st.dataframe(cm_df, use_container_width=True)
 
         with col_right:
             st.markdown("### 📋 Evaluation Summary")
