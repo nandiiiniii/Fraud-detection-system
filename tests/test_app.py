@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from app import load_eval_metrics, load_sample_dataset, predict_sample
+from app import get_eval_metrics, get_sample_dataset, predict_sample
 from src.train import create_pipeline, FEATURE_COLUMNS
 
 
@@ -38,17 +38,17 @@ def test_predict_sample(sample_model_and_row):
     assert isinstance(anomaly_score, (float, np.floating))
 
 
-def test_load_eval_metrics_returns_valid_dict():
-    """Test load_eval_metrics returns a valid dictionary with metrics."""
-    metrics = load_eval_metrics("models/eval_metrics.json")
+def test_get_eval_metrics_returns_valid_dict():
+    """Test get_eval_metrics returns a valid dictionary with metrics."""
+    metrics = get_eval_metrics("models/eval_metrics.json")
     assert isinstance(metrics, dict)
     assert "roc_auc" in metrics
     assert "precision" in metrics
 
 
-def test_load_sample_dataset_fallback():
-    """Test load_sample_dataset returns DataFrame with required columns even if path doesn't exist."""
-    df = load_sample_dataset("non_existent_data_path.csv")
+def test_get_sample_dataset_fallback():
+    """Test get_sample_dataset returns DataFrame with required columns even if path doesn't exist."""
+    df = get_sample_dataset("non_existent_data_path.csv")
     assert isinstance(df, pd.DataFrame)
     for col in FEATURE_COLUMNS:
         assert col in df.columns
@@ -72,4 +72,3 @@ def test_confusion_matrix_heatmap_generation():
         showscale=True,
     )
     assert fig is not None
-

@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Tuple
 import joblib
 import numpy as np
 import pandas as pd
@@ -12,8 +13,7 @@ import streamlit as st
 from src.train import FEATURE_COLUMNS
 
 
-@st.cache_resource
-def load_trained_model(model_path: str = "models/model.pkl"):
+def get_trained_model(model_path: str = "models/model.pkl"):
     """Load the trained Isolation Forest pipeline from disk."""
     path = Path(model_path)
     if not path.exists():
@@ -21,8 +21,13 @@ def load_trained_model(model_path: str = "models/model.pkl"):
     return joblib.load(path)
 
 
-@st.cache_data
-def load_sample_dataset(data_path: str = "data/creditcard.csv") -> pd.DataFrame:
+@st.cache_resource
+def load_trained_model(model_path: str = "models/model.pkl"):
+    """Cached loader for the trained model."""
+    return get_trained_model(model_path)
+
+
+def get_sample_dataset(data_path: str = "data/creditcard.csv") -> pd.DataFrame:
     """Load transactions for single check sampling (falls back to synthetic if not found)."""
     path = Path(data_path)
     if path.exists():
@@ -42,7 +47,12 @@ def load_sample_dataset(data_path: str = "data/creditcard.csv") -> pd.DataFrame:
 
 
 @st.cache_data
-def load_eval_metrics(metrics_path: str = "models/eval_metrics.json") -> dict:
+def load_sample_dataset(data_path: str = "data/creditcard.csv") -> pd.DataFrame:
+    """Cached loader for sample transactions."""
+    return get_sample_dataset(data_path)
+
+
+def get_eval_metrics(metrics_path: str = "models/eval_metrics.json") -> dict:
     """Load evaluation metrics JSON file."""
     path = Path(metrics_path)
     if not path.exists():
@@ -60,14 +70,20 @@ def load_eval_metrics(metrics_path: str = "models/eval_metrics.json") -> dict:
         return json.load(f)
 
 
-def predict_sample(model, df_row: pd.DataFrame):
+@st.cache_data
+def load_eval_metrics(metrics_path: str = "models/eval_metrics.json") -> dict:
+    """Cached loader for evaluation metrics."""
+    return get_eval_metrics(metrics_path)
+
+
+def predict_sample(model, df_row: pd.DataFrame) -> Tuple[bool, float]:
     """Predict whether a single transaction row is normal or fraudulent."""
     features = df_row[FEATURE_COLUMNS]
     raw_pred = model.predict(features)[0]
     decision_score = model.decision_function(features)[0]
     # Anomaly score: higher means more abnormal
-    anomaly_score = -decision_score
-    is_fraud = (raw_pred == -1)
+    anomaly_score = float(-decision_score)
+    is_fraud = bool(raw_pred == -1)
     return is_fraud, anomaly_score
 
 
