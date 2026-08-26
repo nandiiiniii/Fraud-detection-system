@@ -5,7 +5,7 @@ An unsupervised machine learning system designed to detect fraudulent credit car
 ---
 
 ## 🚀 Live Demo
-- **Streamlit Community Cloud:** *[Deployed Streamlit App URL]* (Ready to link via Streamlit Cloud)
+- **Streamlit Community Cloud:https://fraud-detection-system-2ztufkkuu8mwwiyhlqk2fv.streamlit.app/
 - **Repository:** [https://github.com/nandiiiniii/Fraud-detection-system](https://github.com/nandiiiniii/Fraud-detection-system)
 
 ---
